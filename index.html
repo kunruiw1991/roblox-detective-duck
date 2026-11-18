@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>[UPDT🦆] Detective Duck — Roblox 3D Mystery Adventure</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23168049'/%3E%3Crect x='14' y='10' width='36' height='10' rx='3' fill='%23252c3b'/%3E%3Crect x='10' y='18' width='44' height='5' rx='2' fill='%23eab308'/%3E%3Ccircle cx='24' cy='34' r='4' fill='%230f172a'/%3E%3Ccircle cx='40' cy='34' r='4' fill='%230f172a'/%3E%3Crect x='20' y='42' width='24' height='10' rx='5' fill='%23facc15'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
+    <div id="game-shell">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- World-space floating prompt & comic speech bubbles -->
+      <div id="world-overlays">
+        <button id="proximity-prompt" class="rbx-prompt hidden" type="button">
+          <span class="rbx-keycap" id="prompt-keycap">E</span>
+          <span class="rbx-prompt-text">
+            <span class="rbx-prompt-action" id="prompt-action">Inspect</span>
+            <span class="rbx-prompt-sub" id="prompt-sub">Plunger</span>
+          </span>
+        </button>
+        <div id="world-bubbles"></div>
+        <div id="float-pops"></div>
+      </div>
+
+      <!-- Authentic Roblox HUD Layer -->
+      <div id="hud-root">
+        <!-- Top-Left: Roblox Translucent Topbar -->
+        <div id="top-left-hud">
+          <div id="roblox-topbar">
+            <button id="btn-cases" class="rbx-pill-btn" type="button" title="Cases [1-3]">
+              <span class="pill-ico">🕵️</span>
+              <span class="pill-txt" id="top-case-label">Case 1</span>
+            </button>
+            <button id="btn-wardrobe" class="rbx-pill-btn" type="button" title="Detective Wardrobe">
+              <span class="pill-ico">🦆</span>
+              <span class="pill-txt">Wardrobe</span>
+            </button>
+            <button id="btn-notebook" class="rbx-pill-btn" type="button" title="Detective Notebook">
+              <span class="pill-ico">📓</span>
+              <span class="pill-txt" id="top-clue-count">Clues 0/3</span>
+            </button>
+            <button id="btn-accuse-top" class="rbx-pill-btn rbx-pill-gold" type="button" title="Accuse Suspect">
+              <span class="pill-ico">⚖️</span>
+              <span class="pill-txt">Accuse</span>
+            </button>
+            <button id="btn-sound" class="rbx-icon-btn" type="button" title="Sound & Music">
+              <span id="sound-icon">🔊</span>
+            </button>
+            <div id="star-badge" class="rbx-star-pill" title="Detective Stars">
+              <span>★</span>
+              <span id="star-count">0/3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top-Right: Red Heartbeat Vital Monitor Badge (PERMANENT / UNLIMITED) -->
+        <div id="top-right-hud">
+          <div id="vital-badge" class="rbx-panel">
+            <div class="vital-heart-wrap">
+              <span class="vital-heart" id="vital-heart">❤</span>
+            </div>
+            <div class="vital-info">
+              <div class="vital-top-row">
+                <span class="vital-status">PERMANENT</span>
+                <span class="vital-sep">/</span>
+                <span class="vital-sub">UNLIMITED</span>
+              </div>
+              <canvas id="ekg-canvas" width="112" height="22"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom-Left: Blue-and-White Evidence Clue Log Toasts -->
+        <div id="clue-log-panel" class="hidden" aria-live="polite">
+          <div id="clue-log-list"></div>
+        </div>
+
+        <!-- Bottom-Center: Investigation Subtitle Box + Yellow SKIP Button -->
+        <div id="subtitle-wrap">
+          <div id="subtitle-box" class="rbx-panel">
+            <div class="subtitle-speaker" id="subtitle-speaker">DETECTIVE DUCK</div>
+            <div class="subtitle-text" id="subtitle-text">Someone cracked the safe.</div>
+            <button id="btn-skip" class="rbx-skip-btn" type="button">SKIP</button>
+          </div>
+        </div>
+
+        <!-- iPad / Mobile Translucent Roblox Touch Controls -->
+        <div id="touch-controls" class="hidden">
+          <div id="touch-stick-zone">
+            <div id="touch-stick-base">
+              <div id="touch-stick-knob"></div>
+            </div>
+          </div>
+          <div id="touch-right-btns">
+            <button id="btn-touch-action" class="rbx-touch-action hidden" type="button">
+              <span id="touch-action-ico">🔍</span>
+              <span id="touch-action-lbl">INSPECT</span>
+            </button>
+            <div class="touch-bottom-row">
+              <button id="btn-touch-quack" class="rbx-touch-btn rbx-touch-quack" type="button">
+                <span>🦆</span>
+                <span class="tbtn-lbl">QUACK!</span>
+              </button>
+              <button id="btn-touch-jump" class="rbx-touch-btn rbx-touch-jump" type="button">
+                <span>▲</span>
+                <span class="tbtn-lbl">JUMP</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Backdrop & Dialogs -->
+      <div id="modal-backdrop" class="hidden">
+        <!-- 1. Interactive 4-Digit Rotating Brass Padlock Overlay -->
+        <div id="modal-padlock" class="padlock-overlay hidden" role="dialog" aria-label="4-Digit Brass Padlock">
+          <div class="padlock-shackle" id="padlock-shackle"></div>
+          <div class="padlock-body">
+            <div class="padlock-header">
+              <div class="padlock-title-wrap">
+                <span class="padlock-lock-ico">🔒</span>
+                <span class="padlock-title" id="padlock-title">BRASS PADLOCK</span>
+              </div>
+              <button id="btn-padlock-close" class="padlock-x-btn" type="button" aria-label="Close Padlock">X</button>
+            </div>
+            <div class="padlock-hint-strip" id="padlock-hint-strip">
+              <span class="hint-lbl">CLUE DIGITS:</span>
+              <div class="hint-chips" id="padlock-hint-chips"></div>
+              <button id="btn-padlock-hint" class="padlock-hint-btn" type="button">💡 HINT</button>
+            </div>
+            <div class="padlock-tumblers" id="padlock-tumblers"></div>
+            <div class="padlock-footer">
+              <span class="padlock-status" id="padlock-status">Spin the 4 brass dials to match the clues!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Case Select Modal -->
+        <div id="modal-cases" class="rbx-modal hidden" role="dialog" aria-label="Select Mystery Case">
+          <div class="rbx-modal-head">
+            <span class="rbx-modal-title">🕵️ MYSTERY CASE FILES</span>
+            <button class="rbx-modal-x" data-close-modal type="button">X</button>
+          </div>
+          <div class="rbx-modal-body">
+            <div id="cases-grid" class="cases-grid"></div>
+            <div class="modal-settings-bar">
+              <button id="btn-toggle-music" class="rbx-toggle-btn on" type="button">🎵 Music: ON</button>
+              <button id="btn-toggle-sfx" class="rbx-toggle-btn on" type="button">🔊 SFX: ON</button>
+              <button id="btn-toggle-touch" class="rbx-toggle-btn" type="button">📱 Touch: AUTO</button>
+              <button id="btn-reset-save" class="rbx-danger-btn" type="button">Reset Save</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Detective Wardrobe Modal -->
+        <div id="modal-wardrobe" class="rbx-modal hidden" role="dialog" aria-label="Detective Wardrobe">
+          <div class="rbx-modal-head">
+            <span class="rbx-modal-title">🦆 DETECTIVE DUCK WARDROBE</span>
+            <button class="rbx-modal-x" data-close-modal type="button">X</button>
+          </div>
+          <div class="rbx-modal-body">
+            <div class="wardrobe-sub" id="wardrobe-sub">Solve cases to earn Detective Stars and unlock duck costumes!</div>
+            <div id="wardrobe-grid" class="wardrobe-grid"></div>
+          </div>
+        </div>
+
+        <!-- 4. Detective Notebook Modal -->
+        <div id="modal-notebook" class="rbx-modal hidden" role="dialog" aria-label="Detective Notebook">
+          <div class="rbx-modal-head">
+            <span class="rbx-modal-title" id="notebook-title">📓 DETECTIVE NOTEBOOK</span>
+            <button class="rbx-modal-x" data-close-modal type="button">X</button>
+          </div>
+          <div class="rbx-modal-body">
+            <div class="nb-code-card">
+              <div class="nb-code-label">PADLOCK CODE CLUES</div>
+              <div class="nb-code-digits" id="nb-code-digits"></div>
+            </div>
+            <div id="nb-clues-list" class="nb-clues-list"></div>
+            <div class="nb-actions">
+              <button id="btn-nb-accuse" class="rbx-btn-gold" type="button">⚖️ ACCUSE SUSPECT!</button>
+              <button class="rbx-btn-dark" data-close-modal type="button">Back to Room</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Suspect Interrogation Modal -->
+        <div id="modal-suspect" class="rbx-modal rbx-modal-compact hidden" role="dialog" aria-label="Interrogate Suspect">
+          <div class="rbx-modal-head">
+            <span class="rbx-modal-title" id="suspect-modal-title">INTERROGATION</span>
+            <button class="rbx-modal-x" data-close-modal type="button">X</button>
+          </div>
+          <div class="rbx-modal-body">
+            <div class="suspect-detail-row">
+              <img id="suspect-portrait" class="suspect-big-img" alt="Suspect portrait" />
+              <div class="suspect-detail-info">
+                <div class="suspect-role" id="suspect-role">Suspect</div>
+                <div class="suspect-badges" id="suspect-badges"></div>
+                <div class="suspect-quote" id="suspect-quote"></div>
+              </div>
+            </div>
+            <div class="nb-actions">
+              <button id="btn-suspect-accuse" class="rbx-btn-gold" type="button">⚖️ ACCUSE!</button>
+              <button class="rbx-btn-dark" data-close-modal type="button">Keep Investigating</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Accuse Suspect Modal (3 Big Visual Suspect Cards) -->
+        <div id="modal-accuse" class="rbx-modal rbx-modal-wide hidden" role="dialog" aria-label="Accuse the Culprit">
+          <div class="rbx-modal-head">
+            <span class="rbx-modal-title">⚖️ WHO DID IT? PICK THE CULPRIT!</span>
+            <button class="rbx-modal-x" data-close-modal type="button">X</button>
+          </div>
+          <div class="rbx-modal-body">
+            <div class="accuse-hint" id="accuse-hint">Match the clues you found to a suspect's badges!</div>
+            <div id="accuse-cards" class="accuse-cards"></div>
+            <div id="accuse-feedback" class="accuse-feedback hidden"></div>
+          </div>
+        </div>
+
+        <!-- 7. Case Solved Celebration Modal -->
+        <div id="modal-solved" class="rbx-modal rbx-modal-compact hidden" role="dialog" aria-label="Case Solved">
+          <div class="rbx-modal-head solved-head">
+            <span class="rbx-modal-title">⭐ CASE SOLVED! QUACK-TASTIC! ⭐</span>
+            <button class="rbx-modal-x" data-close-modal type="button">X</button>
+          </div>
+          <div class="rbx-modal-body solved-body">
+            <div class="solved-star-burst">⭐</div>
+            <div class="solved-culprit" id="solved-culprit">Tyler The Vandal confessed!</div>
+            <div class="solved-quote" id="solved-quote"></div>
+            <div class="solved-unlock hidden" id="solved-unlock"></div>
+            <div class="nb-actions">
+              <button id="btn-next-case" class="rbx-btn-green" type="button">NEXT CASE ▶</button>
+              <button id="btn-solved-wardrobe" class="rbx-btn-gold" type="button">🦆 WARDROBE</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
